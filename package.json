@@ -1,0 +1,19 @@
+{
+  "name": "calculadora-impresion3d",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Calculadora de precios para impresiones 3D con backend local",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "node --test test/calculator.test.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

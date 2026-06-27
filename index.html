@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calculadora de Precios - Impresiones 3D</title>
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <main class="container">
+    <header class="hero card">
+      <div class="hero-copy">
+        <p class="eyebrow">Maker pricing lab</p>
+        <h1>Calculadora de precios para impresiones 3D</h1>
+        <p class="hero-text">Calculá costo real, precio sugerido y punto de venta con controles claros para materiales, tiempo, energía, comisión de Mercado Libre e IVA en Argentina.</p>
+      </div>
+      <div class="hero-right">
+        <div class="hero-badges">
+          <span class="badge">Modo local</span>
+          <span class="badge">Mercado Libre</span>
+          <span class="badge">Gemini IA</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema oscuro/claro">
+          <span class="theme-icon">🌙</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="tabs-container">
+      <div class="tabs-nav">
+        <button class="tab-btn tab-btn--active" data-tab="tab-basic" aria-selected="true">Cálculo rápido</button>
+        <button class="tab-btn" data-tab="tab-advanced" aria-selected="false">Avanzado</button>
+        <button class="tab-btn" data-tab="tab-market" aria-selected="false">Mercado</button>
+        <button class="tab-btn" data-tab="tab-ai" aria-selected="false">IA</button>
+        <button class="tab-btn" data-tab="tab-history" aria-selected="false">Historial</button>
+      </div>
+    </div>
+
+    <section class="card section-card tab-content tab-content--active" id="tab-basic">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Pricing engine</p>
+          <h2>Entradas de costo</h2>
+        </div>
+        <p class="section-note">Activá solo lo que realmente participa del cálculo. El precio final se ajusta dinámicamente.</p>
+      </div>
+      <div class="grid">
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Filamento (ARS por kg)</span>
+            <label class="switch" aria-label="Incluir filamento en el cálculo">
+              <input id="includeFilament" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="filamentPrice" type="number" min="0" step="0.01" value="3000">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Peso por pieza (g)</span>
+            <label class="switch" aria-label="Incluir peso de la pieza en el cálculo">
+              <input id="includeWeight" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="weightGrams" type="number" min="0" step="0.1" value="50">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Tiempo impresión (h)</span>
+            <label class="switch" aria-label="Incluir tiempo de impresión en el cálculo">
+              <input id="includeTime" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="printHours" type="number" min="0" step="0.01" value="1">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Consumo impresora (W)</span>
+            <label class="switch" aria-label="Incluir consumo de impresora en el cálculo">
+              <input id="includeEnergy" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="printerW" type="number" min="0" step="1" value="120">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Precio electricidad (ARS por kWh)</span>
+            <label class="switch" aria-label="Incluir precio de electricidad en el cálculo">
+              <input id="includeElec" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="elecPrice" type="number" min="0" step="0.01" value="50">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Mano de obra (ARS por hora)</span>
+            <label class="switch" aria-label="Incluir mano de obra en el cálculo">
+              <input id="includeLabor" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="laborPrice" type="number" min="0" step="0.1" value="600">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Post-procesado (ARS)</span>
+            <label class="switch" aria-label="Incluir post-procesado en el cálculo">
+              <input id="includePost" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="postProcess" type="number" min="0" step="0.1" value="50">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Otros costos (ARS)</span>
+            <label class="switch" aria-label="Incluir otros costos en el cálculo">
+              <input id="includeOther" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="otherCosts" type="number" min="0" step="0.1" value="20">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Comisión Mercado Libre (%)</span>
+            <label class="switch" aria-label="Incluir comisión de Mercado Libre en el cálculo">
+              <input id="includeCommission" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="commissionPct" type="number" min="0" max="99" step="0.1" value="13">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>IVA sobre venta (%)</span>
+            <label class="switch" aria-label="Incluir IVA en el cálculo">
+              <input id="includeIVA" type="checkbox" checked>
+              <span></span>
+            </label>
+          </div>
+          <input id="ivaPct" type="number" min="0" max="99" step="0.1" value="21">
+        </label>
+
+        <label class="field-card">
+          <div class="field-topline">
+            <span>Envío vendedor (ARS)</span>
+            <label class="switch" aria-label="Incluir costo de envío en el cálculo">
+              <input id="includeShipping" type="checkbox">
+              <span></span>
+            </label>
+          </div>
+          <input id="shippingCost" type="number" min="0" step="0.1" value="0">
+        </label>
+
+        <label class="field-card field-card--accent">Margen deseado (%)
+          <input id="marginPct" type="number" min="0" max="99" step="0.1" value="30">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="calcBtn" class="button-primary">Calcular precio</button>
+        <button id="saveBtn" class="button-secondary">Guardar escenario</button>
+        <button id="clearHistoryBtn" class="button-ghost">Borrar historial</button>
+      </div>
+    </section>
+
+    <section class="card section-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Sale price</p>
+          <h2>Resultado</h2>
+        </div>
+        <p class="section-note">Verás el costo base, el efecto de comisión/IVA y el precio sugerido final.</p>
+      </div>
+      <div id="result" class="result-panel"></div>
+    </section>
+
+    <!-- Tab: Avanzado -->
+    <section class="card section-card tab-content" id="tab-advanced">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Configuración avanzada</p>
+          <h2>Parámetros detallados</h2>
+        </div>
+        <p class="section-note">Aquí podés ajustar valores específicos por tipo de material, velocidad de impresión y otros parámetros avanzados.</p>
+      </div>
+      <div class="callout callout--info">
+        <strong>Próximamente:</strong> Base de datos de materiales (PLA, PETG, ABS, TPU) con perfiles de impresión, costos históricos, y calculadora de peso estimado desde STL.
+      </div>
+    </section>
+
+    <!-- Tab: Mercado -->
+    <section class="card section-card tab-content" id="tab-market">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Mercado</p>
+          <h2>Comparador de precios</h2>
+        </div>
+        <p class="section-note">Compará tu precio con publicaciones reales descubiertas desde el backend local. La app prioriza enlaces y snippets visibles de Mercado Libre, ordenados por similitud con tu búsqueda.</p>
+      </div>
+      <div class="market-grid">
+        <label class="field-card">
+          Palabra clave / categoría
+          <input id="mlQuery" class="text-input" placeholder="Ej: llavero 3D, soporte celular, organizador" />
+        </label>
+        <label class="field-card">
+          Precio objetivo a comparar (ARS)
+          <input id="mlTargetPrice" type="number" min="0" step="0.01" placeholder="Usa el precio sugerido o ingresá otro">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="mlSearchBtn" class="button-secondary">Buscar similares</button>
+        <button id="mlCompareBtn" class="button-primary">Comparar con mi precio</button>
+      </div>
+      <div id="mlCompareSummary" class="callout callout--market">Todavía no comparaste productos. Buscá una palabra clave y revisá las publicaciones reales y sus enlaces.</div>
+      <div class="callout callout--market">
+        <strong>Plan de imágenes para tarjetas:</strong> hoy usamos tarjetas generadas como fallback. La siguiente evolución es intentar extraer `og:image` de cada publicación cuando el sitio lo permita, y si Mercado Libre bloquea el acceso, usar scraper con navegador headless + caché local. Así podremos mostrar fotos reales sin romper la app.
+      </div>
+      <div class="vision-panel">
+        <div class="section-head section-head--tight">
+          <div>
+            <p class="eyebrow">Visual matcher</p>
+            <h3>Subí una imagen del producto</h3>
+          </div>
+          <p class="section-note">Usá una foto del STL impreso, el producto terminado o la caja. En mobile podés usar la cámara.</p>
+        </div>
+        <div class="vision-grid">
+          <label class="field-card">
+            Imagen del producto
+            <input id="productImageInput" type="file" accept="image/*" capture="environment">
+          </label>
+          <div id="visionPreview" class="vision-preview">
+            <img id="productImagePreview" alt="Vista previa de la imagen subida" />
+            <div id="productImageEmpty" class="vision-preview__empty">Todavía no subiste ninguna imagen.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="analyzeImageBtn" class="button-primary">Analizar imagen y buscar</button>
+          <button id="clearImageBtn" class="button-ghost">Limpiar imagen</button>
+        </div>
+        <div id="visionResult" class="callout callout--vision">La IA reconocerá el objeto y generará la búsqueda ideal para Mercado Libre.</div>
+      </div>
+      <ul id="mlResults" class="list list--cards"></ul>
+    </section>
+
+    <!-- Tab: IA -->
+    <section class="card section-card tab-content" id="tab-ai">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">AI assistant</p>
+          <h2>Asistente IA</h2>
+        </div>
+        <p class="section-note">La IA se usa para analizar precios, escribir títulos y sugerir márgenes. Vive en el backend para proteger la clave.</p>
+      </div>
+      <div class="ai-grid">
+        <label class="field-card">
+          Proveedor de IA
+          <select id="aiProvider">
+            <option value="gemini">Google Gemini (tier gratuito con clave API)</option>
+            <option value="fallback">Respuesta local útil</option>
+          </select>
+        </label>
+        <label class="field-card">
+          Clave API de Google
+          <input id="googleApiKey" type="password" placeholder="Pegá tu clave de Google AI Studio">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="saveAiSettingsBtn" class="button-secondary" type="button">Guardar clave</button>
+        <button id="clearAiSettingsBtn" class="button-ghost" type="button">Limpiar</button>
+      </div>
+      <div class="callout callout--info">
+        <strong>Cómo funciona:</strong> podés usar Google Gemini con una clave API simple y gratuita para consultas de precio, títulos y análisis. Si no ingresás una clave o elegís respuesta local, la app seguirá funcionando con respuestas útiles sin depender de hardware local.
+      </div>
+      <label class="field-card">
+        Prompt para la IA
+        <textarea id="aiPrompt" rows="4" placeholder="Ej: compará mi precio con Mercado Libre y sugerí un precio competitivo para Argentina"></textarea>
+      </label>
+      <div class="hint-row">
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Analizá el margen ideal para vender esta pieza en Argentina y sugerí un precio competitivo.">Analizar margen</button>
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Redactá un título atractivo para Mercado Libre, optimizado para impresión 3D.">Titulares para publicaciones</button>
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Detectá oportunidades para bajar costos de esta impresión 3D sin perder calidad.">Optimizar costos</button>
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Generá una descripción completa de publicación para Mercado Libre, con beneficios, materiales, uso y llamado a la acción.">Descripción de producto</button>
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Proponé 5 ideas de productos imprimibles en 3D para vender en Argentina con buen margen.">Ideas de productos</button>
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Compará el precio sugerido con el mercado y explicá si conviene subir, bajar o mantener el valor.">Comparar con mercado</button>
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Generá respuestas cortas para preguntas frecuentes de compradores de Mercado Libre.">Preguntas frecuentes</button>
+        <button class="hint-chip hint-chip--button" type="button" data-prompt="Escribí una descripción premium, SEO y orientada a venta para el producto detectado.">Descripción premium</button>
+      </div>
+      <div class="actions">
+        <button id="aiAskBtn" class="button-primary">Consultar IA</button>
+      </div>
+      <pre id="aiResponse" class="ai-response"></pre>
+    </section>
+
+    <!-- Tab: Historial -->
+    <section class="card section-card tab-content" id="tab-history">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">History</p>
+          <h2>Histórico local</h2>
+        </div>
+        <p class="section-note">Guardá escenarios para comparar futuros productos y exportarlos a CSV.</p>
+      </div>
+      <div class="actions">
+        <button id="exportCsvBtn" class="button-secondary">Exportar CSV</button>
+        <button id="exportJsonBtn" class="button-secondary">Exportar JSON</button>
+      </div>
+      <ul id="historyList" class="list list--cards"></ul>
+    </section>
+  </main>
+  <script type="module" src="src/js/ui.js"></script>
+</body>
+</html>
