@@ -36,16 +36,44 @@ export function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   ]);
 }
 
+function getMlHeaders() {
+  const method = localStorage.getItem("ml_auth_method") || "common";
+  const headers = {};
+
+  if (method === "dev") {
+    const clientId = localStorage.getItem("ml_dev_client_id");
+    const clientSecret = localStorage.getItem("ml_dev_client_secret");
+    if (clientId && clientSecret) {
+      headers["x-ml-client-id"] = clientId;
+      headers["x-ml-client-secret"] = clientSecret;
+    }
+  } else {
+    const token = localStorage.getItem("ml_user_access_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+}
+
 /**
  * Busca publicaciones en Mercado Libre.
  */
 export async function searchMercadoLibre(query) {
   const res = await fetchWithTimeout(
     apiUrl(`/api/ml/search?q=${encodeURIComponent(query)}`),
-    {},
+    { headers: getMlHeaders() },
     10000
   );
-  if (!res.ok) throw new Error(`Error en búsqueda de mercado (${res.status})`);
+  if (!res.ok) {
+    let errMsg = `Error en búsqueda de mercado (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.error) errMsg = errData.error;
+    } catch {}
+    throw new Error(errMsg);
+  }
   const data = await res.json();
   return data.items || [];
 }
@@ -56,10 +84,17 @@ export async function searchMercadoLibre(query) {
 export async function comparePrice(query, targetPrice) {
   const res = await fetchWithTimeout(
     apiUrl(`/api/ml/compare?q=${encodeURIComponent(query)}&targetPrice=${encodeURIComponent(targetPrice)}`),
-    {},
+    { headers: getMlHeaders() },
     10000
   );
-  if (!res.ok) throw new Error(`Error en comparación de mercado (${res.status})`);
+  if (!res.ok) {
+    let errMsg = `Error en comparación de mercado (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.error) errMsg = errData.error;
+    } catch {}
+    throw new Error(errMsg);
+  }
   return await res.json();
 }
 
@@ -69,10 +104,17 @@ export async function comparePrice(query, targetPrice) {
 export async function getProductDetails(url) {
   const res = await fetchWithTimeout(
     apiUrl(`/api/ml/details?url=${encodeURIComponent(url)}`),
-    {},
+    { headers: getMlHeaders() },
     12000
   );
-  if (!res.ok) throw new Error(`Error al obtener detalles del producto (${res.status})`);
+  if (!res.ok) {
+    let errMsg = `Error al obtener detalles del producto (${res.status})`;
+    try {
+      const errData = await res.json();
+      if (errData.error) errMsg = errData.error;
+    } catch {}
+    throw new Error(errMsg);
+  }
   return await res.json();
 }
 
@@ -107,5 +149,56 @@ export async function analyzeImage(imageDataUrl, context, provider, apiKey) {
     25000
   );
   if (!res.ok) throw new Error(`Error al analizar la imagen (${res.status})`);
+  return await res.json();
+}
+
+/**
+ * Obtiene la vista previa de una publicación en Mercado Libre con títulos/descripciones por IA y precios sugeridos.
+ */
+export async function getMlPublishPreview(formData, apiKey) {
+  const res = await fetchWithTimeout(
+    apiUrl("/api/ml/publish/preview"),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formData, apiKey }),
+    },
+    25000
+  );
+  if (!res.ok) {
+    let errMsg = `Error al generar vista previa (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data.error) errMsg = data.error;
+    } catch {}
+    throw new Error(errMsg);
+  }
+  return await res.json();
+}
+
+/**
+ * Crea la publicación final en Mercado Libre. Requiere OAuth.
+ */
+export async function createMlListing(listingData) {
+  const res = await fetchWithTimeout(
+    apiUrl("/api/ml/publish/create"),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("ml_user_access_token")}`
+      },
+      body: JSON.stringify(listingData),
+    },
+    20000
+  );
+  if (!res.ok) {
+    let errMsg = `Error al publicar (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data.error) errMsg = data.error;
+    } catch {}
+    throw new Error(errMsg);
+  }
   return await res.json();
 }

@@ -536,6 +536,21 @@ function bind() {
   $("exportJsonBtn").addEventListener("click", downloadJSONFile);
 
   $("mlSearchBtn").addEventListener("click", async () => {
+    const method = localStorage.getItem("ml_auth_method") || "common";
+    let isAuthenticated = false;
+    if (method === "dev") {
+      isAuthenticated = !!localStorage.getItem("ml_dev_client_id") && !!localStorage.getItem("ml_dev_client_secret");
+    } else {
+      isAuthenticated = !!localStorage.getItem("ml_user_access_token");
+    }
+
+    if (!isAuthenticated) {
+      $("mlCompareSummary").innerHTML = `<span style="color: var(--error);">Error: No autenticado. Debe configurar las credenciales (Opción A) o iniciar sesión con Mercado Libre (Opción B) en la pestaña <strong>Integraciones</strong> para buscar.</span>`;
+      const ul = $("mlResults");
+      if (ul) ul.innerHTML = `<li class="section-note" style="color: var(--error); padding: 20px; text-align: center;">Debe iniciar sesión o configurar sus credenciales en la pestaña <strong>Integraciones</strong> antes de realizar búsquedas.</li>`;
+      return;
+    }
+
     const q = $("mlQuery").value.trim() || "impresion 3D";
     $("mlCompareSummary").textContent = "Buscando productos similares...";
     try {
@@ -548,7 +563,72 @@ function bind() {
     }
   });
 
+  // Eventos de Conexión de Mercado Libre
+  const mlAuthSelect = $("mlAuthMethod");
+  if (mlAuthSelect) {
+    mlAuthSelect.addEventListener("change", (e) => {
+      const method = e.target.value;
+      localStorage.setItem("ml_auth_method", method);
+      updateMlPanels(method);
+    });
+  }
+
+  const mlLoginBtn = $("mlLoginBtn");
+  if (mlLoginBtn) {
+    mlLoginBtn.addEventListener("click", () => {
+      const port = window.location.port;
+      const host = window.location.hostname || "127.0.0.1";
+      const redirectUrl = (port === "3000" || port === "3001") 
+        ? `${window.location.origin}/api/ml/auth`
+        : `http://${host}:3000/api/ml/auth`;
+      window.location.href = redirectUrl;
+    });
+  }
+
+  const mlLogoutBtn = $("mlLogoutBtn");
+  if (mlLogoutBtn) {
+    mlLogoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("ml_user_access_token");
+      localStorage.removeItem("ml_user_refresh_token");
+      updateMlCommonStatus();
+    });
+  }
+
+  const mlSaveDevBtn = $("mlSaveDevBtn");
+  if (mlSaveDevBtn) {
+    mlSaveDevBtn.addEventListener("click", () => {
+      const clientId = $("mlClientId").value.trim();
+      const clientSecret = $("mlClientSecret").value.trim();
+      if (!clientId || !clientSecret) {
+        alert("Por favor, ingresá tanto el Client ID como el Client Secret.");
+        return;
+      }
+      localStorage.setItem("ml_dev_client_id", clientId);
+      localStorage.setItem("ml_dev_client_secret", clientSecret);
+      alert("Credenciales de desarrollador guardadas localmente.");
+    });
+  }
+
+  const mlClearDevBtn = $("mlClearDevBtn");
+  if (mlClearDevBtn) {
+    mlClearDevBtn.addEventListener("click", () => {
+      localStorage.removeItem("ml_dev_client_id");
+      localStorage.removeItem("ml_dev_client_secret");
+      if ($("mlClientId")) $("mlClientId").value = "";
+      if ($("mlClientSecret")) $("mlClientSecret").value = "";
+      alert("Credenciales de desarrollador eliminadas.");
+    });
+  }
+
   $("mlCompareBtn").addEventListener("click", runMarketComparison);
+  $("mlPublishPreviewBtn").addEventListener("click", handleGeneratePreview);
+  $("mlPublishFillBtn").addEventListener("click", () => {
+    const query = $("mlQuery")?.value?.trim() || "";
+    if (query && $("mlPublishName")) {
+      $("mlPublishName").value = query;
+    }
+    alert("Datos de costos del cotizador vinculados correctamente.");
+  });
   $("aiAskBtn").addEventListener("click", handleAiPrompt);
 
   $("saveAiSettingsBtn").addEventListener("click", () => {
@@ -627,10 +707,300 @@ function bind() {
   syncDisabledState();
 }
 
+function updateMlCommonStatus() {
+  const token = localStorage.getItem("ml_user_access_token");
+  const statusText = $("mlStatusText");
+  const loginBtn = $("mlLoginBtn");
+  const logoutBtn = $("mlLogoutBtn");
+  if (!statusText || !loginBtn || !logoutBtn) return;
+
+  if (token) {
+    statusText.innerHTML = "Estado: <strong>Conectado como usuario común</strong> (Búsquedas de mercado habilitadas).";
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+  } else {
+    statusText.innerHTML = "Estado: <strong>No conectado</strong> (Las búsquedas de mercado están deshabilitadas).";
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+  }
+}
+
+function updateMlPanels(method) {
+  const panelCommon = $("mlPanelCommon");
+  const panelDev = $("mlPanelDev");
+  if (!panelCommon || !panelDev) return;
+
+  if (method === "dev") {
+    panelCommon.style.display = "none";
+    panelDev.style.display = "block";
+  } else {
+    panelCommon.style.display = "block";
+    panelDev.style.display = "none";
+    updateMlCommonStatus();
+  }
+}
+
+function loadMlSettings() {
+  const params = new URLSearchParams(window.location.search);
+  const mlAccessToken = params.get("ml_access_token");
+  const mlRefreshToken = params.get("ml_refresh_token");
+
+  if (mlAccessToken) {
+    localStorage.setItem("ml_user_access_token", mlAccessToken);
+    if (mlRefreshToken) {
+      localStorage.setItem("ml_user_refresh_token", mlRefreshToken);
+    }
+    localStorage.setItem("ml_auth_method", "common");
+    
+    const url = new URL(window.location.href);
+    url.searchParams.delete("ml_access_token");
+    url.searchParams.delete("ml_refresh_token");
+    window.history.replaceState({}, document.title, url.pathname + url.search);
+  }
+
+  const method = localStorage.getItem("ml_auth_method") || "common";
+  const select = $("mlAuthMethod");
+  if (select) select.value = method;
+
+  const devClientId = localStorage.getItem("ml_dev_client_id") || "";
+  const devClientSecret = localStorage.getItem("ml_dev_client_secret") || "";
+  if ($("mlClientId")) $("mlClientId").value = devClientId;
+  if ($("mlClientSecret")) $("mlClientSecret").value = devClientSecret;
+
+  updateMlPanels(method);
+}
+
+// ─── Lógica del Publicador de Mercado Libre ─────────────────
+
+let currentPreview = null;
+
+async function handleGeneratePreview() {
+  const name = $("mlPublishName").value.trim();
+  const material = $("mlPublishMaterial").value.trim();
+  const color = $("mlPublishColor").value.trim();
+  const features = $("mlPublishFeatures").value.trim();
+  const strategy = $("mlPublishStrategy").value;
+  const status = $("mlPublishStatus");
+  const previewCard = $("mlPublishPreviewCard");
+
+  if (!name) {
+    status.style.display = "block";
+    status.className = "callout callout--error";
+    status.textContent = "Por favor, ingresá el nombre del producto.";
+    return;
+  }
+
+  status.style.display = "block";
+  status.className = "callout callout--info";
+  status.textContent = "Analizando mercado y generando publicación con IA...";
+  previewCard.style.display = "none";
+
+  const inputs = getInputsFromDOM();
+  const calculated = calculateCost(inputs);
+  const costs = {
+    filamentCost: calculated.filamentCost,
+    energyCost: calculated.energyCost,
+    laborCost: calculated.laborCost,
+    postCost: calculated.postCost,
+    otherCost: calculated.otherCost,
+    shippingCost: calculated.shipping,
+    marginPct: inputs.marginPct,
+    commissionPct: inputs.commissionPct,
+    ivaPct: inputs.ivaPct,
+  };
+
+  try {
+    const { apiKey } = getAiSettings();
+    const res = await api.getMlPublishPreview({
+      productName: name,
+      material,
+      color,
+      features,
+      costs,
+      pricingStrategy: strategy,
+    }, apiKey);
+
+    status.style.display = "none";
+    previewCard.style.display = "block";
+    renderPublishPreview(res.preview);
+  } catch (err) {
+    status.className = "callout callout--error";
+    status.textContent = `Error al generar vista previa: ${err.message}`;
+  }
+}
+
+function renderPublishPreview(previewData) {
+  const container = $("mlPublishPreviewCard");
+  if (!container) return;
+
+  currentPreview = previewData;
+
+  const { title, description, price, pricing, competition } = previewData;
+  const breakdown = pricing.breakdown || {};
+
+  container.innerHTML = `
+    <h3>📋 Vista Previa de Publicación</h3>
+    
+    <div class="preview-section">
+      <label for="mlPublishFinalTitle">Título (SEO Optimizado, máx 60 caracteres)</label>
+      <input type="text" id="mlPublishFinalTitle" value="${escapeHtml(title)}" maxlength="60" />
+      <small id="mlPublishTitleCount" style="color: var(--muted);">${title.length}/60 caracteres</small>
+    </div>
+
+    <div class="preview-section">
+      <label>Precio Final a Publicar (ARS)</label>
+      <div class="price-comparison" style="display: flex; flex-direction: column; gap: 4px;">
+        <input type="number" id="mlPublishFinalPrice" value="${price}" style="font-size: 1.3rem; font-weight: bold; width: 100%; border: none; background: transparent; padding: 0;" />
+        <small style="color: var(--muted);">Promedio competencia: ARS ${formatMoney(competition.avgPrice)}</small>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <label for="mlPublishFinalDescription">Descripción Persuasiva (máx 500 caracteres)</label>
+      <textarea id="mlPublishFinalDescription" rows="6" maxlength="500">${escapeHtml(description)}</textarea>
+      <small id="mlPublishDescCount" style="color: var(--muted);">${description.length}/500 caracteres</small>
+    </div>
+
+    <div class="pricing-breakdown">
+      <h4>Desglose de Costos y Comisiones</h4>
+      <table>
+        <tr>
+          <td>Costo Filamento:</td>
+          <td>ARS ${formatMoney(breakdown.material)}</td>
+        </tr>
+        <tr>
+          <td>Costo Electricidad:</td>
+          <td>ARS ${formatMoney(breakdown.electricity)}</td>
+        </tr>
+        <tr>
+          <td>Mano de Obra:</td>
+          <td>ARS ${formatMoney(breakdown.labor)}</td>
+        </tr>
+        <tr>
+          <td>Post-procesado:</td>
+          <td>ARS ${formatMoney(breakdown.postProcessing)}</td>
+        </tr>
+        <tr>
+          <td>Otros Costos:</td>
+          <td>ARS ${formatMoney(breakdown.other)}</td>
+        </tr>
+        <tr class="separator">
+          <td><strong>Total Producción:</strong></td>
+          <td><strong>ARS ${formatMoney(breakdown.material + breakdown.electricity + breakdown.labor + breakdown.postProcessing + breakdown.other)}</strong></td>
+        </tr>
+        <tr>
+          <td>Comisión Mercado Libre:</td>
+          <td>ARS ${formatMoney(breakdown.mlCommission)}</td>
+        </tr>
+        <tr>
+          <td>IVA estimado:</td>
+          <td>ARS ${formatMoney(breakdown.iva)}</td>
+        </tr>
+        <tr>
+          <td>Costo Envío:</td>
+          <td>ARS ${formatMoney(breakdown.shipping)}</td>
+        </tr>
+        <tr class="separator">
+          <td><strong>Ganancia Neta Estimada:</strong></td>
+          <td><strong style="color: var(--ok);">ARS ${formatMoney(price - (breakdown.material + breakdown.electricity + breakdown.labor + breakdown.postProcessing + breakdown.other + breakdown.mlCommission + breakdown.iva + breakdown.shipping))}</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Margen Real:</strong></td>
+          <td><strong>${pricing.profitMargin}%</strong></td>
+        </tr>
+      </table>
+    </div>
+
+    ${competition.competitors && competition.competitors.length > 0 ? `
+    <div class="preview-section">
+      <label>Competidores Reales (Top 3)</label>
+      <ul style="padding-left: 16px; margin: 8px 0; font-size: 0.9rem; color: var(--text);">
+        ${competition.competitors.slice(0, 3).map(c => `
+          <li style="margin-bottom: 6px;">
+            <strong>ARS ${formatMoney(c.price)}</strong> — <a href="${escapeHtml(c.permalink)}" target="_blank" style="color: var(--accent);">${escapeHtml(c.title.slice(0, 45))}...</a>
+          </li>
+        `).join("")}
+      </ul>
+    </div>
+    ` : ""}
+
+    <div class="actions" style="margin-top: 20px;">
+      <button id="mlPublishFinalBtn" class="button-primary">Publicar en Mercado Libre</button>
+      <button id="mlPublishCancelBtn" class="button-ghost">Cancelar</button>
+    </div>
+  `;
+
+  // Bind counters and button events
+  const titleInput = $("mlPublishFinalTitle");
+  if (titleInput) {
+    titleInput.addEventListener("input", (e) => {
+      $("mlPublishTitleCount").textContent = `${e.target.value.length}/60 caracteres`;
+    });
+  }
+
+  const descTextarea = $("mlPublishFinalDescription");
+  if (descTextarea) {
+    descTextarea.addEventListener("input", (e) => {
+      $("mlPublishDescCount").textContent = `${e.target.value.length}/500 caracteres`;
+    });
+  }
+
+  $("mlPublishCancelBtn").addEventListener("click", () => {
+    container.style.display = "none";
+    container.innerHTML = "";
+    currentPreview = null;
+  });
+
+  $("mlPublishFinalBtn").addEventListener("click", handleFinalPublish);
+}
+
+async function handleFinalPublish() {
+  const title = $("mlPublishFinalTitle").value.trim();
+  const description = $("mlPublishFinalDescription").value.trim();
+  const price = Number($("mlPublishFinalPrice").value);
+  const status = $("mlPublishStatus");
+
+  if (!title || !price) {
+    alert("El título y el precio son obligatorios para publicar.");
+    return;
+  }
+
+  const token = localStorage.getItem("ml_user_access_token");
+  if (!token) {
+    alert("Debes iniciar sesión con Mercado Libre primero en la pestaña Integraciones.");
+    const tabBtn = document.querySelector('[data-tab="tab-integrations"]');
+    if (tabBtn) tabBtn.click();
+    return;
+  }
+
+  status.style.display = "block";
+  status.className = "callout callout--info";
+  status.textContent = "Publicando producto en Mercado Libre...";
+
+  try {
+    const res = await api.createMlListing({
+      title,
+      description,
+      price,
+      quantity: 1,
+    });
+
+    status.className = "callout callout--ok";
+    status.innerHTML = `<strong>¡Publicado con éxito!</strong> Tu publicación ya está activa: <a href="${escapeHtml(res.permalink)}" target="_blank" style="color: var(--bg); text-decoration: underline; font-weight: bold;">Ver en Mercado Libre</a>.`;
+
+    $("mlPublishPreviewCard").style.display = "none";
+    currentPreview = null;
+  } catch (err) {
+    status.className = "callout callout--error";
+    status.textContent = `Error al publicar: ${err.message}`;
+  }
+}
+
 // Inicialización
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   loadAiSettings();
+  loadMlSettings();
   bind();
   loadHistory();
   renderResult();

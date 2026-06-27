@@ -32,6 +32,7 @@
         <button class="tab-btn" data-tab="tab-advanced" aria-selected="false">Avanzado</button>
         <button class="tab-btn" data-tab="tab-market" aria-selected="false">Mercado</button>
         <button class="tab-btn" data-tab="tab-ai" aria-selected="false">IA</button>
+        <button class="tab-btn" data-tab="tab-integrations" aria-selected="false">Integraciones</button>
         <button class="tab-btn" data-tab="tab-history" aria-selected="false">Historial</button>
       </div>
     </div>
@@ -254,6 +255,52 @@
         <div id="visionResult" class="callout callout--vision">La IA reconocerá el objeto y generará la búsqueda ideal para Mercado Libre.</div>
       </div>
       <ul id="mlResults" class="list list--cards"></ul>
+
+      <hr style="border: 0; border-top: 1px solid var(--line); margin: 28px 0;">
+
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Publisher</p>
+          <h2>Publicar en Mercado Libre</h2>
+        </div>
+        <p class="section-note">Generá una publicación optimizada para SEO en Mercado Libre basada en tus costos calculados, analizando la competencia en tiempo real.</p>
+      </div>
+
+      <div class="ai-grid">
+        <label class="field-card">
+          Nombre del Producto
+          <input id="mlPublishName" class="text-input" placeholder="Ej: Soporte Móvil Articulado" />
+        </label>
+        <label class="field-card">
+          Material Usado
+          <input id="mlPublishMaterial" class="text-input" placeholder="Ej: PLA, PETG, ABS" value="PLA" />
+        </label>
+        <label class="field-card">
+          Color
+          <input id="mlPublishColor" class="text-input" placeholder="Ej: Negro Mate, Rojo, Translúcido" />
+        </label>
+        <label class="field-card">
+          Características / Atributos
+          <textarea id="mlPublishFeatures" rows="2" placeholder="Ej: Ajustable 360°, compatible con iPhone y Android, alta resistencia"></textarea>
+        </label>
+        <label class="field-card">
+          Estrategia de Precio
+          <select id="mlPublishStrategy">
+            <option value="balanced" selected>Equilibrada / Balanced (Ideal)</option>
+            <option value="aggressive">Agresiva (10% abajo del promedio de competencia)</option>
+            <option value="premium">Premium (15% arriba del promedio de competencia)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions" style="margin-top: 16px;">
+        <button id="mlPublishPreviewBtn" class="button-primary">Generar Vista Previa</button>
+        <button id="mlPublishFillBtn" class="button-ghost" type="button">Cargar datos del cotizador</button>
+      </div>
+
+      <div id="mlPublishStatus" class="callout" style="display: none; margin-top: 16px;"></div>
+
+      <div id="mlPublishPreviewCard" class="ml-preview-card" style="display: none; margin-top: 24px;"></div>
     </section>
 
     <!-- Tab: IA -->
@@ -285,6 +332,7 @@
       <div class="callout callout--info">
         <strong>Cómo funciona:</strong> podés usar Google Gemini con una clave API simple y gratuita para consultas de precio, títulos y análisis. Si no ingresás una clave o elegís respuesta local, la app seguirá funcionando con respuestas útiles sin depender de hardware local.
       </div>
+
       <label class="field-card">
         Prompt para la IA
         <textarea id="aiPrompt" rows="4" placeholder="Ej: compará mi precio con Mercado Libre y sugerí un precio competitivo para Argentina"></textarea>
@@ -303,6 +351,72 @@
         <button id="aiAskBtn" class="button-primary">Consultar IA</button>
       </div>
       <pre id="aiResponse" class="ai-response"></pre>
+    </section>
+
+    <!-- Tab: Integraciones -->
+    <section class="card section-card tab-content" id="tab-integrations">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Connections</p>
+          <h2>Integraciones</h2>
+        </div>
+        <p class="section-note">Configurá las conexiones externas que alimentan los datos de tu calculadora.</p>
+      </div>
+
+      <!-- Integración: Mercado Libre -->
+      <div class="integration-block">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Mercado Libre</p>
+            <h2>Conexión con Mercado Libre</h2>
+          </div>
+          <p class="section-note">Conecta tu cuenta para obtener precios y publicaciones reales de competidores argentinos.</p>
+        </div>
+
+        <div class="ai-grid">
+          <label class="field-card">
+            Método de Conexión
+            <select id="mlAuthMethod">
+              <option value="common">Usuario Común (Conectar con Mercado Libre)</option>
+              <option value="dev">Desarrollador / Dev (Client ID + Secret)</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Panel: Opción B (Usuario Común) -->
+        <div id="mlPanelCommon" class="auth-panel" style="margin-bottom: 20px;">
+          <div class="actions" style="margin-top: 16px;">
+            <button id="mlLoginBtn" class="button-primary" type="button">Conectar con Mercado Libre</button>
+            <button id="mlLogoutBtn" class="button-ghost" type="button" style="display: none;">Desconectar</button>
+          </div>
+          <div id="mlStatusText" class="section-note" style="margin-top: 8px;">Estado: No conectado. Las búsquedas están deshabilitadas.</div>
+        </div>
+
+        <!-- Panel: Opción A (Desarrollador) -->
+        <div id="mlPanelDev" class="auth-panel" style="display: none; margin-bottom: 20px;">
+          <div class="ai-grid" style="margin-top: 16px;">
+            <label class="field-card">
+              Client ID (App ID)
+              <input id="mlClientId" type="text" placeholder="Ej: 123456789012345">
+            </label>
+            <label class="field-card">
+              Client Secret
+              <input id="mlClientSecret" type="password" placeholder="Pegá tu client_secret de Mercado Libre">
+            </label>
+          </div>
+          <div class="actions" style="margin-top: 16px;">
+            <button id="mlSaveDevBtn" class="button-secondary" type="button">Guardar credenciales dev</button>
+            <button id="mlClearDevBtn" class="button-ghost" type="button">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--line); margin: 28px 0;">
+
+      <!-- Placeholder para futuras integraciones -->
+      <div class="callout callout--info">
+        <strong>Próximamente:</strong> Aquí aparecerán nuevas integraciones como proveedores de filamento, servicios de envío y más.
+      </div>
     </section>
 
     <!-- Tab: Historial -->

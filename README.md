@@ -127,24 +127,31 @@ La aplicación almacena de forma segura tu API Key de Google Gemini en el `local
 
 *Nota: Si no posees clave, la aplicación cuenta con un motor de fallback local inteligente que simulará respuestas de diagnóstico en pesos argentinos.*
 
-### 2. API de Mercado Libre Developers (Híbrido / Opcional)
-Para obtener la máxima velocidad de búsqueda, fotos reales en alta definición y evitar bloqueos de red:
-1. Registra tu aplicación en el [Portal de Developers de Mercado Libre](https://developers.mercadolibre.com.ar/).
-2. Obtén tu `Client ID` y `Client Secret`.
-3. Configura tu archivo `.env` en la carpeta `server/` con las siguientes variables:
-   ```env
-   ML_CLIENT_ID=tu_client_id
-   ML_CLIENT_SECRET=tu_client_secret
-   ```
-4. Reinicia el servidor Express. La aplicación pasará automáticamente a usar la API oficial.
+### 2. Integración Oficial de Mercado Libre
+La aplicación posee soporte completo para interactuar con Mercado Libre Argentina de forma oficial de dos maneras:
+- **Opción A: Modo Desarrollador (Client ID + Client Secret):** Los programadores pueden ingresar sus propias credenciales de aplicación creadas en el portal de developers de Mercado Libre. Los tokens de acceso se solicitan bajo demanda (`client_credentials`) y se manejan de forma segura en memoria del servidor.
+- **Opción B: Modo Usuario Común (Autenticación OAuth 2.0):** Los usuarios vendedores pueden iniciar sesión de forma segura haciendo clic en **Conectar con Mercado Libre**. Serán redirigidos al portal de inicio de sesión de Mercado Libre para otorgar permisos a la aplicación y retornar con un token de acceso que se almacena en el navegador para autorizar la publicación de sus artículos.
 
-*Nota: Si no configuras estas variables, la calculadora seguirá funcionando perfectamente mediante el scraper de fallback automático (DuckDuckGo + Jina.ai).*
+*La configuración se realiza desde la pestaña dedicada **Integraciones**.*
+
+---
+
+## 📈 Publicador Inteligente & Asistente SEO (Fase 2.5)
+La app cuenta con un publicador y optimizador comercial integrado en la pestaña **Mercado**:
+1. **Carga de Datos:** Importa automáticamente los costos de producción y margen calculados del cotizador.
+2. **Generación con IA (Gemini):**
+   - **Títulos SEO**: Analiza palabras clave para generar un título comercial adaptado a Mercado Libre limitado estrictamente a 60 caracteres.
+   - **Descripciones persuasivas**: Crea fichas de venta técnicas en 500 caracteres, detallando características del material impreso en 3D y llamada a la acción en tono local (Argentina).
+3. **Precios Dinámicos:** Calcula y ajusta el precio óptimo a publicar basado en el costo real, comisiones de Mercado Libre, IVA, envío y una estrategia de mercado ajustable (Equilibrada, Agresiva o Premium) frente a competidores en tiempo real.
+4. **Publicación Directa:** Permite editar y publicar el producto final en Mercado Libre en un solo clic (requiere autenticación de vendedor).
 
 ---
 
 ## 🎯 Próximos Desarrollos (Roadmap)
-- [x] **Fase 2: Extracción Real de Precios y Fotos del Mercado:** Implementar lazy loading usando proxy de Jina.ai en el backend para extraer precios reales y metaetiquetas de imágenes de publicaciones de Mercado Libre.
+- [x] **Fase 1: Motor Matemático de Precios:** Margen neto, costos fijos y variables.
+- [x] **Fase 2: Extracción Real de Precios y Fotos del Mercado:** Integración de búsqueda y comparación de publicaciones reales con metaetiquetas de imágenes.
+- [x] **Fase 2.5: Conexión Oficial y Publicador SEO de Mercado Libre:** Integración dual de Mercado Libre API (Opción A/B), optimizador de fichas comerciales con Gemini e inteligencia de precios dinámicos.
 - [ ] **Fase 3: Historial Avanzado e Interactivo:** Tarjetas de proyecto interactivas para cargar cotizaciones guardadas nuevamente en la calculadora, eliminar registros individuales e incluir notas y etiquetas personalizadas (ej. "Prototipo", "Cliente VIP").
 - [ ] **Fase 4: Biblioteca de Materiales (Pestaña Avanzado):** CRUD local completo de perfiles de filamento (PLA, ABS, PETG, TPU) con costos por kg y densidades asociadas para poblar dinámicamente el selector.
 - [ ] **Fase 5: Estimador Automatizado mediante Archivo 3D (STL/3MF):** Análisis local del volumen de archivos STL/3MF para calcular peso de filamento requerido y estimar tiempos de forma automática.
-- [ ] **Fase 6: Asistente SEO y Generador Fichas Comerciales:** Herramientas integradas para optimización comercial y generación de respuestas rápidas para compradores en Mercado Libre.
+
