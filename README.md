@@ -114,6 +114,8 @@ La aplicación es local-first. Tu API Key de Google Gemini se almacena de forma 
 ---
 
 ## 🎯 Próximos Desarrollos (Roadmap)
-- [ ] **Fase 4:** CRUD completo de materiales (PLA, PETG, ABS, TPU, etc.) en pestaña "Avanzado" con costos por kg y densidades predefinidas.
-- [ ] **Fase 5:** Subida directa de archivos `.stl` / `.3mf` para calcular el volumen en $cm^3$ y estimar automáticamente peso en gramos y tiempo de impresión.
-- [ ] **Fase 6:** Asistente SEO interactivo y generador premium de fichas técnicas para Mercado Libre.
+- [ ] **Fase 2: Extracción Real de Precios y Fotos del Mercado:** Implementar lazy loading usando proxy de Jina.ai en el backend para extraer precios reales y metaetiquetas de imágenes de publicaciones de Mercado Libre.
+- [ ] **Fase 3: Historial Avanzado e Interactivo:** Tarjetas de proyecto interactivas para cargar cotizaciones guardadas nuevamente en la calculadora, eliminar registros individuales e incluir notas y etiquetas personalizadas (ej. "Prototipo", "Cliente VIP").
+- [ ] **Fase 4: Biblioteca de Materiales (Pestaña Avanzado):** CRUD local completo de perfiles de filamento (PLA, ABS, PETG, TPU) con costos por kg y densidades asociadas para poblar dinámicamente el selector.
+- [ ] **Fase 5: Estimador Automatizado mediante Archivo 3D (STL/3MF):** Análisis local del volumen de archivos STL/3MF para calcular peso de filamento requerido y estimar tiempos de forma automática.
+- [ ] **Fase 6: Asistente SEO y Generador Fichas Comerciales:** Herramientas integradas para optimización comercial y generación de respuestas rápidas para compradores en Mercado Libre.
