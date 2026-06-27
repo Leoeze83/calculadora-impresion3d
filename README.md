@@ -59,6 +59,21 @@ El proyecto cuenta con un diseño limpio y modular:
 
 ---
 
+## 🖼️ Extracción Dinámica y Asíncrona (Fase 2)
+
+La aplicación realiza un flujo asíncrono e inteligente para mostrar la realidad del mercado sin bloquear la experiencia de usuario:
+1. **Lazy Loading Escalonado:** Se renderizan primero las tarjetas usando datos de búsqueda preliminares e imágenes generativas SVG. Luego se disparan peticiones escalonadas (1.2s de intervalo) al endpoint `/api/ml/details` del servidor backend para no saturar los límites de peticiones ni bloquear el hilo del navegador.
+2. **Resiliencia ante Bloqueos:** El backend consulta vía `Jina.ai` a Mercado Libre y extrae el precio final y la imagen principal (`og:image`). Si detecta un bloqueo de Cloudflare o captcha, responde con estados de fallback controlados permitiendo que la interfaz permanezca funcional con marcadores estéticos.
+
+| Resultados y Lazy Load de la Fase 2 |
+| :---: |
+| ![Resultados de la Fase 2](docs/assets/fase2_results.png) |
+
+*Flujo animado verificado de carga secuencial de tarjetas en Chrome:*
+![Grabación del flujo de la Fase 2](docs/assets/fase2_demo.webp)
+
+---
+
 ## 🛠️ Cómo Ejecutar el Proyecto
 
 ### Opción 1: Aplicación Completa con Backend (Recomendada)
@@ -114,7 +129,7 @@ La aplicación es local-first. Tu API Key de Google Gemini se almacena de forma 
 ---
 
 ## 🎯 Próximos Desarrollos (Roadmap)
-- [ ] **Fase 2: Extracción Real de Precios y Fotos del Mercado:** Implementar lazy loading usando proxy de Jina.ai en el backend para extraer precios reales y metaetiquetas de imágenes de publicaciones de Mercado Libre.
+- [x] **Fase 2: Extracción Real de Precios y Fotos del Mercado:** Implementar lazy loading usando proxy de Jina.ai en el backend para extraer precios reales y metaetiquetas de imágenes de publicaciones de Mercado Libre.
 - [ ] **Fase 3: Historial Avanzado e Interactivo:** Tarjetas de proyecto interactivas para cargar cotizaciones guardadas nuevamente en la calculadora, eliminar registros individuales e incluir notas y etiquetas personalizadas (ej. "Prototipo", "Cliente VIP").
 - [ ] **Fase 4: Biblioteca de Materiales (Pestaña Avanzado):** CRUD local completo de perfiles de filamento (PLA, ABS, PETG, TPU) con costos por kg y densidades asociadas para poblar dinámicamente el selector.
 - [ ] **Fase 5: Estimador Automatizado mediante Archivo 3D (STL/3MF):** Análisis local del volumen de archivos STL/3MF para calcular peso de filamento requerido y estimar tiempos de forma automática.
