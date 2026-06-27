@@ -64,6 +64,19 @@ export async function comparePrice(query, targetPrice) {
 }
 
 /**
+ * Obtiene los detalles de un producto (precio e imagen) raspados desde su URL.
+ */
+export async function getProductDetails(url) {
+  const res = await fetchWithTimeout(
+    apiUrl(`/api/ml/details?url=${encodeURIComponent(url)}`),
+    {},
+    12000
+  );
+  if (!res.ok) throw new Error(`Error al obtener detalles del producto (${res.status})`);
+  return await res.json();
+}
+
+/**
  * Realiza una consulta al asistente IA.
  */
 export async function askAI(prompt, context, provider, apiKey) {

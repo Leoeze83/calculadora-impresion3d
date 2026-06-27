@@ -172,7 +172,82 @@ async function searchMercadoLibre(query, limit = 8, retryCount = 0) {
   }
 }
 
+async function fetchProductDetails(url) {
+  const targetUrl = `https://r.jina.ai/${url}`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const resp = await fetch(targetUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!resp.ok) {
+      throw new Error(`Jina.ai returned ${resp.status}`);
+    }
+
+    const markdown = await resp.text();
+
+    if (markdown.includes("unusual traffic") || markdown.includes("Cookies consent") || markdown.includes("Centro de Privacidad") || markdown.includes("Algo salió mal")) {
+      return {
+        url,
+        price: null,
+        image: null,
+        blocked: true
+      };
+    }
+
+    let price = null;
+    const priceMatches = markdown.match(/\$[ \t]*([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]{2})?|[0-9]+)/g);
+    if (priceMatches && priceMatches.length > 0) {
+      for (const pStr of priceMatches) {
+        const matches = pStr.match(/\$[ \t]*([0-9]{1,3}(?:\.[0-9]{3})+(?:,[0-9]{2})?|[0-9]+)/);
+        if (matches) {
+          let cleanStr = matches[1];
+          if (cleanStr.includes(",") && cleanStr.includes(".")) {
+            cleanStr = cleanStr.replace(/\./g, "").replace(/,/g, ".");
+          } else if (cleanStr.includes(",")) {
+            cleanStr = cleanStr.replace(/,/g, ".");
+          } else if (cleanStr.includes(".")) {
+            const parts = cleanStr.split(".");
+            if (parts[parts.length - 1].length === 3) {
+              cleanStr = cleanStr.replace(/\./g, "");
+            } else {
+              cleanStr = cleanStr.replace(/\./g, "");
+            }
+          }
+          const val = parseFloat(cleanStr);
+          if (!isNaN(val) && val > 100) {
+            price = val;
+            break;
+          }
+        }
+      }
+    }
+
+    let image = null;
+    const imageMatch = markdown.match(/https:\/\/http2\.mlstatic\.com\/D_NQ_NP_[A-Za-z0-9_-]+-[FO]\.(?:jpg|webp|png|jpeg)/i);
+    if (imageMatch) {
+      image = imageMatch[0];
+    }
+
+    return {
+      url,
+      price,
+      image,
+      blocked: false
+    };
+  } catch (error) {
+    console.error(`Error al scrapear detalles de ${url}:`, error.message);
+    return {
+      url,
+      price: null,
+      image: null,
+      error: error.message
+    };
+  }
+}
+
 module.exports = {
   searchMercadoLibre,
   extractPrice,
+  fetchProductDetails,
 };

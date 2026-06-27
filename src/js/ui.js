@@ -204,6 +204,40 @@ function getAiSettings() {
 }
 
 // Operaciones de Mercado
+async function lazyLoadDetails(li, permalink) {
+  if (!permalink) return;
+  const img = li.querySelector(".market-card__media img");
+  const tagsContainer = li.querySelector(".market-card__tags");
+
+  try {
+    const details = await api.getProductDetails(permalink);
+    if (!details || details.blocked || details.error) {
+      return;
+    }
+
+    if (details.image) {
+      img.style.opacity = 0.3;
+      img.src = details.image;
+      img.onload = () => {
+        img.style.transition = "opacity 0.4s ease";
+        img.style.opacity = 1;
+      };
+    }
+
+    if (details.price && tagsContainer) {
+      let priceSpan = tagsContainer.querySelector(".market-price");
+      if (!priceSpan) {
+        priceSpan = document.createElement("span");
+        priceSpan.className = "market-price";
+        tagsContainer.insertBefore(priceSpan, tagsContainer.firstChild);
+      }
+      priceSpan.textContent = `ARS ${formatMoney(details.price)}`;
+    }
+  } catch (e) {
+    console.error("Error al cargar detalles lazy del producto:", e);
+  }
+}
+
 function renderMarketResults(items) {
   const ul = $("mlResults");
   if (!ul) return;
@@ -213,7 +247,7 @@ function renderMarketResults(items) {
     return;
   }
 
-  items.forEach((item) => {
+  items.forEach((item, index) => {
     const li = document.createElement("li");
     const title = escapeHtml(item.title);
     const snippet = escapeHtml(
@@ -229,7 +263,7 @@ function renderMarketResults(items) {
     li.innerHTML = `
       <div class="market-card">
         <div class="market-card__media">
-          <img src="${item.image || createFallbackImage(item.title)}" alt="${title}">
+          <img src="${item.image || createFallbackImage(item.title)}" alt="${title}" style="transition: opacity 0.4s ease;">
         </div>
         <div class="market-card__body">
           <div class="market-card__top">
@@ -248,6 +282,13 @@ function renderMarketResults(items) {
       </div>
     `;
     ul.appendChild(li);
+
+    // Carga perezosa escalonada de imágenes reales y precios exactos
+    if (permalink && permalink.includes("mercadolibre.com.ar")) {
+      setTimeout(() => {
+        lazyLoadDetails(li, permalink);
+      }, index * 1200);
+    }
   });
 }
 

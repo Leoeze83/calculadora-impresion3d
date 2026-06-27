@@ -4,7 +4,7 @@ const path = require("path");
 
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
-const { searchMercadoLibre } = require("./services/mercadolibre");
+const { searchMercadoLibre, fetchProductDetails } = require("./services/mercadolibre");
 const {
   buildFallbackAiResponse,
   buildFallbackVisionResponse,
@@ -105,6 +105,20 @@ app.get("/api/ml/compare", async (req, res) => {
       },
       nearest,
     });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/ml/details", async (req, res) => {
+  const url = req.query.url;
+  if (!url) {
+    return res.status(400).json({ error: "url is required" });
+  }
+  try {
+    const details = await fetchProductDetails(url);
+    res.json(details);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e.message });
