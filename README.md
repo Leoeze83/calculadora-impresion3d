@@ -116,15 +116,29 @@ Valida:
 
 ---
 
-## 🔑 Configuración de IA y Variables
-La aplicación es local-first. Tu API Key de Google Gemini se almacena de forma segura en el `localStorage` de tu propio navegador y se envía cifrada en el payload de las llamadas locales.
+## 🔑 Configuración de IA y APIs externas
 
+### 1. Copiloto IA (Local-first)
+La aplicación almacena de forma segura tu API Key de Google Gemini en el `localStorage` de tu propio navegador.
 1. Ve a la pestaña **IA**.
 2. Selecciona **Google Gemini**.
 3. Ingresa tu API Key gratuita obtenida en [Google AI Studio](https://aistudio.google.com/).
 4. Haz clic en **Guardar clave**.
 
-*Nota: Si no posees clave, la aplicación cuenta con un motor de fallback local inteligente que simulará respuestas coherentes de diagnóstico de negocios en pesos argentinos.*
+*Nota: Si no posees clave, la aplicación cuenta con un motor de fallback local inteligente que simulará respuestas de diagnóstico en pesos argentinos.*
+
+### 2. API de Mercado Libre Developers (Híbrido / Opcional)
+Para obtener la máxima velocidad de búsqueda, fotos reales en alta definición y evitar bloqueos de red:
+1. Registra tu aplicación en el [Portal de Developers de Mercado Libre](https://developers.mercadolibre.com.ar/).
+2. Obtén tu `Client ID` y `Client Secret`.
+3. Configura tu archivo `.env` en la carpeta `server/` con las siguientes variables:
+   ```env
+   ML_CLIENT_ID=tu_client_id
+   ML_CLIENT_SECRET=tu_client_secret
+   ```
+4. Reinicia el servidor Express. La aplicación pasará automáticamente a usar la API oficial.
+
+*Nota: Si no configuras estas variables, la calculadora seguirá funcionando perfectamente mediante el scraper de fallback automático (DuckDuckGo + Jina.ai).*
 
 ---
 

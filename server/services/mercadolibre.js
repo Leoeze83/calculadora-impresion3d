@@ -52,6 +52,56 @@ function escapeXml(text) {
     .replace(/'/g, "&apos;");
 }
 
+let tokenCache = {
+  accessToken: null,
+  expiresAt: 0,
+};
+
+async function getAccessToken() {
+  const clientId = process.env.ML_CLIENT_ID;
+  const clientSecret = process.env.ML_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    return null;
+  }
+
+  if (tokenCache.accessToken && Date.now() < tokenCache.expiresAt - 60000) {
+    return tokenCache.accessToken;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret
+    });
+
+    const response = await fetch("https://api.mercadolibre.com/oauth/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+      },
+      body: params.toString()
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn("Mercado Libre OAuth failed:", errText);
+      return null;
+    }
+
+    const data = await response.json();
+    tokenCache.accessToken = data.access_token;
+    tokenCache.expiresAt = Date.now() + (data.expires_in * 1000);
+    console.log("🔑 Nuevo token obtenido de Mercado Libre. Expira en:", data.expires_in, "segundos.");
+    return tokenCache.accessToken;
+  } catch (err) {
+    console.error("Error al obtener token de Mercado Libre:", err.message);
+    return null;
+  }
+}
+
 function thumbnailDataUri(title, query) {
   const safeTitle = sanitizeText(title).slice(0, 24);
   const safeQuery = sanitizeText(query).slice(0, 22);
@@ -107,6 +157,38 @@ function extractPrice(title, snippet) {
 }
 
 async function searchMercadoLibre(query, limit = 8, retryCount = 0) {
+  const token = await getAccessToken();
+  if (token) {
+    console.log(`🤖 Usando API oficial de Mercado Libre para buscar: "${query}"`);
+    try {
+      const response = await fetch(`https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(query)}&limit=${limit}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const results = (data.results || []).map((r) => {
+          const image = r.thumbnail ? r.thumbnail.replace(/^http:/i, "https:") : null;
+          return {
+            id: r.id,
+            title: r.title,
+            permalink: r.permalink,
+            price: r.price,
+            image: image,
+            score: similarityScore(query, r.title),
+            source: "api_oficial"
+          };
+        });
+        return results;
+      } else {
+        console.warn(`API oficial retornó estado ${response.status}. Reintentando con scraper...`);
+      }
+    } catch (err) {
+      console.warn("Falla en API oficial, reintentando con DuckDuckGo scraper...", err.message);
+    }
+  }
+
   const maxRetries = 2;
   const ddgQuery = buildDuckDuckGoQuery(query);
   const sourceUrl = `https://r.jina.ai/http://https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(ddgQuery)}`;
@@ -173,6 +255,43 @@ async function searchMercadoLibre(query, limit = 8, retryCount = 0) {
 }
 
 async function fetchProductDetails(url) {
+  const token = await getAccessToken();
+  if (token) {
+    const idMatch = url.match(/MLA-?([0-9]+)/i);
+    if (idMatch) {
+      const itemId = `MLA${idMatch[1]}`;
+      console.log(`🤖 Usando API oficial de Mercado Libre para detalles de item: ${itemId}`);
+      try {
+        const response = await fetch(`https://api.mercadolibre.com/items/${itemId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const item = await response.json();
+          let image = null;
+          if (item.pictures && item.pictures.length > 0) {
+            image = item.pictures[0].secure_url || item.pictures[0].url;
+          }
+          if (image) {
+            image = image.replace(/^http:/i, "https:");
+          }
+          return {
+            url,
+            price: item.price,
+            image,
+            blocked: false,
+            source: "api_oficial"
+          };
+        } else {
+          console.warn(`API oficial retornó estado ${response.status} para detalles de item. Reintentando con scraper...`);
+        }
+      } catch (err) {
+        console.warn("Falla en detalles de API oficial, reintentando con Jina.ai...", err.message);
+      }
+    }
+  }
+
   const targetUrl = `https://r.jina.ai/${url}`;
   try {
     const controller = new AbortController();
