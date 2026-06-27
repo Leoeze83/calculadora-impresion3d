@@ -13,7 +13,13 @@ Una suite local-first avanzada e inteligente para makers. Permite calcular costo
 
 Así funciona el flujo completo de cálculo rápido, testeo de escenarios, pestañas modulares y raspado con comparativa de mercado real:
 
-![Demostración de la Calculadora](file:///home/leo-vaderloop/.gemini/antigravity-ide/brain/cf313255-9213-48ab-ba55-f5c97ef9acce/verify_calculator_chrome_1782538262217.webp)
+![Demostración de la Calculadora](docs/assets/demo.webp)
+
+### 📸 Capturas de Pantalla (Flujo Validado)
+
+| 1. App Inicial (Dark Mode) | 2. Resultado de Cotización | 3. Comparador de Mercado |
+| :---: | :---: | :---: |
+| ![App Inicial](docs/assets/loaded.png) | ![Resultado](docs/assets/results.png) | ![Comparador](docs/assets/comparison.png) |
 
 ---
 
